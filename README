@@ -1,0 +1,88 @@
+CS118 Project 2
+
+Kyi, Vincent (803 916 486)
+Zhang, Jason (503 888 927)
+
+---DESIGN DECISIONS---
+
+*INTRODUCTION*
+Our functions are split up into different .h and .c files with the .h files
+containing mainly structs and function names while the .c files define the
+various functions we chose to implement.
+
+*READING & CATEGORIZING PACKETS*
+We began our project by implementing the functions that allowed us to decipher
+incoming packets and store their information appropriately. Our sr_handlepacket
+function checks whether the packet's ETHERTYPE is ARP or IP. If the incoming
+packet falls into neither of the categories or is corrupted, it is then
+dropped.
+
+*ARP REQUESTS*
+If the packet is an ARP request, it is passed into handle_arp_request where we
+check for errors before modifying its ethernet header and destination. The
+ARP header is also modified by switching the destination and source and
+rewriting source as from our own IP. The rest of the ARP header is filled in
+and a packet is created and sent as a reply. If the packet received in instead
+an ARP reply, its information is stored inside our ARP cache (discussed later)
+before routing the packet to its proper destination.
+
+*IP PACKETS*
+IP packets are handled via handle_ip in which the function checks whether or
+not the packet is an ICMP packet. If so, the packet is passed onto our
+handle_icmp function. Otherwise, we check the packet's TTL and determine if it
+has already expired. If not, we proceed to check for any matching entries
+in our ARP cache. If not, we broadcast it by creating an ARP request packet
+and sending it through different interfaces. If it does exist, we extract its
+information to the proper header fields and forward the IP packet.
+
+*ICMP PACKETS*
+For ICMP packets, we created a struct to house its type, code, checksum, and
+five other relevant fields. A function to handle ICMP packets was created and
+operates by using switch statements. Depending on what type of ICMP message is
+received, the function will dictate where to store the reply information.
+
+*TRACKING ARP REQUESTS*
+Several additional functions were implemented to keep track of the ARP requests
+being sent out. Two structs, one for IP packets and another for ARP requests
+were created. The project guidelines specify a maximum of five same requests
+being sent before dropping the packets. A function to initialize a queue,
+creating packets, and updating them achieves this objective. update_arp_req
+primarily serves to track how many requests are sent and is responsible for
+dropping the remaining packets if the transmission count exceeds 5. Creating
+request packets itself merely involves copying information over from another
+packet passed in through the parameters.
+
+*ARP CACHE*
+An ARP cache struct was made containing an array holding ARP entries and also
+threads. We implemented the functions to initialize the cache, insert and erase
+entries in arp_cache.h. For initialization, all entry structs inside the array
+had their IP address components set to 0. This method allowed us to easily
+check whether a slot in the array was being used. AC_insert takes advantage
+of this fact by looking for an element in the array with a zeroed IP address
+and filling in all information specified by its parameters. In opposite
+fashion, AC_erase looks for a matching IP passed in through its parameters
+and zeroes the element in the array. Lastly, we implemented an AC_update
+function which checks for expired entry. It runs on an infinite while loop
+which waits one second before executing the rest of its code. When it does,
+it checks for the ages of the entries in the array and zeroes any that are
+older than 15. Every operation is done through mutually exclusive threads so
+that multiple entries may be analyzed simultaneously.
+
+---TRADEOFFS---
+
+Our functions put a heavy emphasis on using threads. There were alternatives
+we found during planning, but since we were more versed in threading, we chose
+this approach. By using mutually exclusive threads, were able to stray away
+from race conditions and handle incoming and outgoing ARP requests efficiently.
+
+Our ICMP function was longer than intended since we decided that it should
+also handle deciphering whether the packet was a ping, traceroute, etc... In
+the end, we used switch statements to sort the ICMP packets and how the
+outgoing packet's header is filled depends on what switches were activated.
+
+We chose to use an array of entry structs instead of linked lists
+because the number of entries were defined by the specifications (100), thus
+we didn't have to worry about changing sizes. Furthermore, parsing through and
+editing the cache would require less work since we wouldn't have to reconnect
+nodes. However, because arrays are limited to linear search, it may not
+be the most efficient storage unit either.

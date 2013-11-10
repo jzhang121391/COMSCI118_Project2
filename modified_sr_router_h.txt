@@ -1,0 +1,23 @@
+struct arp_request_queue
+{
+    struct arp_request *queue;
+    pthread_mutex_t mutex;
+    pthread_t thread;
+};
+
+struct sr_instance
+{
+    int  sockfd;   /* socket to server */
+    char user[32]; /* user name */
+    char host[32]; /* host name */
+    char template[30]; /* template name if any */
+    char auth_key_fn[64]; /* auth key filename */
+    unsigned short topo_id;
+    struct sockaddr_in sr_addr; /* address to server */
+    struct sr_if* if_list; /* list of interfaces */
+    struct sr_rt* routing_table; /* routing table */
+    FILE* logfile;
+
+    struct arp_cache AC;
+    struct arp_request_queue ARQ;
+};

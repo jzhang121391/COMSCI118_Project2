@@ -1,0 +1,18 @@
+TODO 1. ARP Reply Cache - Struct consists of -ip -MAC address
+		-age
+		-interface, so you know where it came from
+	- Use Linked List
+	- Have delete node functionality
+	- Search functionality
+	
+2. Queue
+	- For IP Packets, in the case that it waits for ARP reply
+	- Use Linked Lists
+	- For now, make it as long as you want
+	
+3. Routing
+	- Use functions in sr_rt to rout packet to destination
+	- 
+4. Timeouts for ARP replies
+        - Send every 15 seconds
+        -Have to use threading
